@@ -1,0 +1,8 @@
+<launch>
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find project_artemis)/worlds/sih.world"/>
+    <!-- more default parameters can be changed here -->
+  </include>
+<node name="camera_subscriber" pkg="project_artemis" type="camera_sub.py" />
+  <node name="obstacle_avoidance_node" pkg="project_artemis" type="obstacle_avoidance" />
+</launch>

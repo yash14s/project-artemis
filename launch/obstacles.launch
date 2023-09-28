@@ -1,0 +1,7 @@
+<launch>
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find project_artemis)/worlds/obstacles.world"/>
+    <!-- more default parameters can be changed here -->
+  </include>
+  <node name="obstacle_avoidance" pkg="project_artemis" type="obstacle_avoidance" />	
+</launch>
