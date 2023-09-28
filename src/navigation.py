@@ -2,6 +2,7 @@
 import rospy
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import LaserScan
+from project_artemis.msg import State 
 from dronekit import connect, VehicleMode, LocationGlobalRelative
 from pymavlink import mavutil
 import math
@@ -88,7 +89,6 @@ def condition_yaw(degrees, relative, clk):
 	time.sleep(6)
 	print("Yaw complete")
 
-
 def send_local_ned_velocity(vx,vy,vz):
 	msg=vehicle.message_factory.set_position_target_local_ned_encode(0,0,0,mavutil.mavlink.MAV_FRAME_BODY_OFFSET_NED,0b0000111111000111,0,0,0,vx,vy,vz,0,0,0,0,0)
 	vehicle.send_mavlink(msg)
@@ -102,6 +102,17 @@ def send_global_ned_velocity(vx,vy,vz):
 def stop():
 	print("Stop")
 	send_local_ned_velocity(0,0,0)
+
+def publish_state(x, y, z, vx, vy, vz):
+	#This function will publish drone's position and velocity for logging purpose
+	state_msg = State()
+	state_msg.position.x = x
+	state_msg.position.y = y
+	state_msg.position.z = z
+	state_msg.velocity.linear.x = vx
+	state_msg.velocity.linear.y = vy
+	state_msg.velocity.linear.z = vz
+	state_publisher.publish(state_msg)
 
 def nav_velocity(waypoint,speed):
 	x_goal = waypoint.lat
@@ -118,6 +129,7 @@ def nav_velocity(waypoint,speed):
 		theta_deg = theta*180.0/math.pi
 	else:
 		theta_deg = 360 + theta*180.0/math.pi
+	publish_state(x_init, y_init, z_init, vx, vy, vz)
 	return vx,vy,vz,theta_deg
 
 #Getting velocity output from the obstacle avoidance algorithm
@@ -126,11 +138,6 @@ def avoidance_callback(velocity_msg):
 	avoid_vx = velocity_msg.linear.x
 	avoid_vy = velocity_msg.linear.y
 	avoid_vz = velocity_msg.linear.z
-
-rospy.init_node("navigation_node", anonymous=False)
-rospy.Subscriber("avoidance_velocity_topic", Twist, avoidance_callback)
-rospy.Subscriber("spur/laser/scan", LaserScan, lidar_callback)
-rospy.on_shutdown(land)
 
 def travel(waypoint,speed):
 	print("Travelling to waypoint")
@@ -148,6 +155,13 @@ def travel(waypoint,speed):
 			break
 	print("******Reached******")
 	stop()
+
+
+rospy.init_node("navigation_node", anonymous=False)
+rospy.Subscriber("avoidance_velocity_topic", Twist, avoidance_callback)
+rospy.Subscriber("spur/laser/scan", LaserScan, lidar_callback)
+state_publisher = rospy.Publisher('/state', State, queue_size = 10)
+rospy.on_shutdown(land)
 
 wp1=LocationGlobalRelative(-35.3642059,149.1699815,5)
 wp2=LocationGlobalRelative(-35.3636285,149.1650891,5)
