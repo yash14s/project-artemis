@@ -20,10 +20,11 @@ def rgb_callback(frame):
 
 def detectPoacher(image):
 	classes = None
-	with open("/home/yash/catkin_ws/src/project_artemis/src/yolo/coco.names", "r") as f:
+	PATH = "/root/lidar_drone/catkin_ws/src/project_artemis/src/yolo/"
+	with open(PATH + "coco.names", "r") as f:
 		classes = [line.strip() for line in f.readlines()]
 
-	net = cv2.dnn.readNet('/home/yash/catkin_ws/src/project_artemis/src/yolo/yolov3.weights', '/home/yash/catkin_ws/src/project_artemis/src/yolo/yolov3.cfg')
+	net = cv2.dnn.readNet(PATH+'yolov3-tiny.weights', PATH+'yolov3-tiny.cfg')
 	net.setInput(cv2.dnn.blobFromImage(image, 0.00392, (416,416), (0,0,0), True, crop=False))
 	layer_names = net.getLayerNames()
 	output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]

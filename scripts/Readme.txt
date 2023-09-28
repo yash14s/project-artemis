@@ -1,1 +1,1 @@
-For the entire framework, run_project_artemis.sh
+./run_project_artemis.sh will run the entire framework.

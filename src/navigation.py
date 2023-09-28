@@ -9,7 +9,7 @@ import time
 
 def connect_to_python():
 	global vehicle
-	vehicle = connect('tcp:192.168.29.189:5762', wait_ready=True)
+	vehicle = connect('udp:127.0.0.1:14551', wait_ready=True)
 	print("Connected")
 
 def disconnect_to_python():
@@ -84,21 +84,10 @@ def condition_yaw(degrees, relative, clk):
 		is_clk=-1
 	msg=vehicle.message_factory.command_long_encode(0,0,mavutil.mavlink.MAV_CMD_CONDITION_YAW,0,degrees,0,is_clk,is_relative,0,0,0)
 	vehicle.send_mavlink(msg)
-	vehicle.flush()
 	print("Yawing")
 	time.sleep(6)
 	print("Yaw complete")
 
-def yaw_initializer():
-	print("Initialising yaw")
-	lat=vehicle.location.global_relative_frame.lat
-	lon=vehicle.location.global_relative_frame.lon
-	alt=vehicle.location.global_relative_frame.alt
-	aLocation=LocationGlobalRelative(lat,lon,alt)
-	msg=vehicle.message_factory.set_position_target_global_int_encode(0,0,0,mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,0b0000111111111000,aLocation.lat*1e7,aLocation.lon*1e7,aLocation.alt,0,0,0,0,0,0,0,0)
-	vehicle.send_mavlink(msg)
-	vehicle.flush()
-	time.sleep(2)
 
 def send_local_ned_velocity(vx,vy,vz):
 	msg=vehicle.message_factory.set_position_target_local_ned_encode(0,0,0,mavutil.mavlink.MAV_FRAME_BODY_OFFSET_NED,0b0000111111000111,0,0,0,vx,vy,vz,0,0,0,0,0)
@@ -167,7 +156,6 @@ wp4=LocationGlobalRelative(-35.3611261,149.1647887,5)
 wp5=LocationGlobalRelative(-35.3635235,149.1680288,5)
 
 takeoff(5)
-yaw_initializer()
 #travel(wp1,1)
 #travel(wp2,1)
 #travel(wp3,1)

@@ -9,6 +9,4 @@
 		$ rosrun rqt_reconfigure rqt_reconfigure
 
 
-
-
 [1] http://wiki.ros.org/stereo_image_proc
