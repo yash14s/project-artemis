@@ -11,6 +11,7 @@ import csv
 
 csv_file_path = 'state_data.csv'
 field_names = ['X', 'Y', 'Z', 'Vx', 'Vy', 'Vz']
+log_data = False	#Write state data to csv if True
 
 def connect_to_python():
 	global vehicle
@@ -70,11 +71,20 @@ def land():
 	disarm()
 	disconnect_to_python()
 
+def haversine_distance(latitude1, longitude1, latitude2, longitude2):
+    latitude1 = math.radians(latitude1)
+    latitude2 = math.radians(latitude2)
+    longitude1 = math.radians(longitude1)
+    longitude2 = math.radians(longitude2)
+    dlon = longitude2 - longitude1
+    dlat = latitude2 - latitude1
+    a = math.sin(dlat/2)**2 + math.cos(latitude1) * math.cos(latitude2) * math.sin(dlon/2)**2
+    c = 2 * math.asin(a**0.5)
+    r = 6371000
+    return c*r
+
 def get_distance_meters(waypoint,currentLocation):
-	dLat = waypoint.lat - currentLocation.lat
-	dLon = waypoint.lon - currentLocation.lon
-	dAlt = waypoint.alt - currentLocation.alt
-	distance = math.sqrt((dLon*dLon)+(dLat*dLat)+(dAlt*dAlt))
+	distance = haversine_distance(waypoint.lat, waypoint.lon, currentLocation.lat, currentLocation.lon)
 	print("Distance to wp : %f"%distance)
 	return distance
 
@@ -144,8 +154,28 @@ def avoidance_callback(velocity_msg):
 	avoid_vz = velocity_msg.linear.z
 
 def travel(waypoint,speed):
-	with open(csv_file_path, 'a', newline='') as csv_file:
-		csv_writer = csv.writer(csv_file)
+	if log_data:
+		with open(csv_file_path, 'a', newline='') as csv_file:
+			csv_writer = csv.writer(csv_file)
+			print("Travelling to waypoint")
+			distance_to_waypoint = get_distance_meters(waypoint,vehicle.location.global_relative_frame)
+			vx,vy,vz,theta_deg = nav_velocity(waypoint,speed)
+			condition_yaw(theta_deg,0,1)
+			while True and (not rospy.is_shutdown()):
+				if avoid_vx != 0 or avoid_vy != 0 or avoid_vz != 0:
+					send_local_ned_velocity(avoid_vx, avoid_vy, avoid_vz)
+					rospy.loginfo("avoid_vx = %f , avoid_vy = %f , avoid_vz = %f", avoid_vx, avoid_vy, avoid_vz)
+					csv_writer.writerow([vehicle.location.global_relative_frame.lat,vehicle.location.global_relative_frame.lon,altitude,avoid_vx,avoid_vy,avoid_vz])
+				vx,vy,vz,theta_deg = nav_velocity(waypoint,speed)
+				current_distance = get_distance_meters(waypoint,vehicle.location.global_relative_frame)
+				send_global_ned_velocity(vx,vy,vz)
+				csv_writer.writerow([vehicle.location.global_relative_frame.lat,vehicle.location.global_relative_frame.lon,altitude,vx,vy,vz])
+				if (current_distance<0.01*distance_to_waypoint):
+					break
+			print("******Reached******")
+			stop()
+		
+	else:
 		print("Travelling to waypoint")
 		distance_to_waypoint = get_distance_meters(waypoint,vehicle.location.global_relative_frame)
 		vx,vy,vz,theta_deg = nav_velocity(waypoint,speed)
@@ -154,11 +184,9 @@ def travel(waypoint,speed):
 			if avoid_vx != 0 or avoid_vy != 0 or avoid_vz != 0:
 				send_local_ned_velocity(avoid_vx, avoid_vy, avoid_vz)
 				rospy.loginfo("avoid_vx = %f , avoid_vy = %f , avoid_vz = %f", avoid_vx, avoid_vy, avoid_vz)
-				csv_writer.writerow([vehicle.location.global_relative_frame.lat,vehicle.location.global_relative_frame.lon,altitude,avoid_vx,avoid_vy,avoid_vz])
 			vx,vy,vz,theta_deg = nav_velocity(waypoint,speed)
 			current_distance = get_distance_meters(waypoint,vehicle.location.global_relative_frame)
 			send_global_ned_velocity(vx,vy,vz)
-			csv_writer.writerow([vehicle.location.global_relative_frame.lat,vehicle.location.global_relative_frame.lon,altitude,vx,vy,vz])
 			if (current_distance<0.01*distance_to_waypoint):
 				break
 		print("******Reached******")
