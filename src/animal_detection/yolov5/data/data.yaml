@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 31
+names: ['Bear', 'Brown-bear', 'Bull', 'Camel', 'Cattle', 'Cheetah', 'Crocodile', 'Deer', 'Elephant', 'Fox', 'Giraffe', 'Goat', 'Horse', 'Jaguar', 'Kangaroo', 'Koala', 'Leopard', 'Lion', 'Lynx', 'Monkey', 'Mule', 'Panda', 'Parrot', 'Penguin', 'Rabbit', 'Raccoon', 'Red-panda', 'Rhinoceros', 'Sheep', 'Tiger', 'Zebra']
+
+roboflow:
+  workspace: project-artemis
+  project: animal-detection-9ndl0
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/project-artemis/animal-detection-9ndl0/dataset/1

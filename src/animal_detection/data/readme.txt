@@ -1,0 +1,1 @@
+The zip files in this dir were obtained from roboflow. They contain the image dataset split into train, val, test, along with annotations suited for the model.
